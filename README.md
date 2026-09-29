@@ -75,6 +75,35 @@ Closing the viewer window sends the stop command to the device and closes the co
 
 ## Using the viewer
 
+### Controls
+Every action has an on-screen button. Keys work too, once you've clicked on the plot to give it focus.
+
+| Button | Keys | Action |
+|---|---|---|
+| `< Prev` / `Next >` | `←` `→` `↑` `↓`, `PgUp` `PgDn`, `p`/`n`, `k`/`j`, `Space`, mouse wheel | Previous / next page of 16 channels |
+| | `Home` / `End` | First / last page |
+| `Zoom +` / `Zoom -` | `+` / `-` | Scale traces up / down (×1.3 per step) |
+| `Auto` | `a` | Toggle automatic scaling |
+| `Reset` | `0` | Reset zoom to 1× |
+| `Quality` | `q` | Print a full per-channel quality table to the terminal |
+| | `c` | Toggle keeping each trace inside its own row (default on) |
+
+### Reading the screen
+
+| Element | Meaning |
+|---|---|
+| **Title bar** | Page, channel range, µV per row, AUTO/MANUAL scaling, lost-sample count (only shown if samples were lost), and `head r` (see [cap-level checks](#cap-level-checks)) |
+| **Scale bar** (bottom left) | The height of one row, in µV |
+| **Percentage** beside each channel | Contact quality: **green ≥ 70**, **orange 40–69**, **red < 40**. Updated every 2 s for all 64 channels |
+| **Grey trace + `CLIP`** | The channel keeps hitting the edge of its row **and** scores below 40%: a bad contact. A good channel that briefly clips (a blink on a gelled frontal electrode) keeps its colour |
+| **Amber banner** | Fewer than 8 channels are well contacted, so cap-level checks are not running yet (normal while gelling) |
+| **Red banner** | `NO HEAD SIGNAL`: enough channels look clean on their own, but together they show none of the spatial structure a head produces (an empty cap, or a disconnected reference/ground) |
+
+The display is filtered 1–45 Hz with notches at the mains frequency and its first harmonic, for viewing only. **The LSL stream is never filtered.** The display scale follows the well-contacted channels, so good EEG fills its row and poor channels clip against the edges.
+
+<img width="875" height="625" alt="image" src="https://github.com/user-attachments/assets/3376c855-d7f0-4dd0-b88e-00706173e43d" />
+
+*A real session with only F7, F9 and AF7 gelled. Those three score 99–100% while the 61 dry channels are greyed out, and the amber banner says cap-level checks are waiting for 8 good channels.*
 
 
 
