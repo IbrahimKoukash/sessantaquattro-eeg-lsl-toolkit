@@ -1,0 +1,12 @@
+# sq_lsl_viewer
+numpy>=1.21
+scipy>=1.8
+matplotlib>=3.5
+pylsl>=1.16
+
+# optional: electrode positions in the LSL metadata, neighbour-based
+# quality checks, topographic maps and .fif export in analyze_eeg
+mne>=1.0
+
+# companion tools (analyze_eeg, calibrate_quality)
+pandas>=1.3
