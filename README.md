@@ -105,5 +105,20 @@ The display is filtered 1–45 Hz with notches at the mains frequency and its fi
 
 *A real session with only F7, F9 and AF7 gelled. Those three score 99–100% while the 61 dry channels are greyed out, and the amber banner says cap-level checks are waiting for 8 good channels.*
 
+---
 
+## How quality is scored
+
+Each channel's percentage is the **lowest** of its sub-scores, so one serious problem can't be hidden by good results elsewhere. Every channel is first judged on **its own signal**, without reference to the other channels. Cross-channel checks are added only when enough channels are well contacted to compare against.
+
+### Per-channel sub-scores (5-second window)
+
+| Sub-score | Measures | Full marks | Zero |
+|---|---|---|---|
+| **amp** | Typical amplitude: robust SD (1.4826 × MAD) of the 1–45 Hz signal. Blinks barely move it; continuous noise does | 3–50 µV | ≤ 1 µV or ≥ 150 µV |
+| **line** | Mains pickup, both **absolute** and **relative to the channel's EEG** (the worse of the two) | ≤ 30 µV and ≤ 1× EEG | ≥ 300 µV or ≥ 10× EEG |
+| **hf** | 40–100 Hz power, with the mains band removed, relative to 0.5–40 Hz power (muscle, broadband noise) | ≤ 0.35 | ≥ 1.5 |
+| **corr** | Agreement with neighbouring electrodes (below). Only computed when possible | see below | |
+
+Any sample within 5% of full scale scores 0 (clipping at the amplifier).
 
