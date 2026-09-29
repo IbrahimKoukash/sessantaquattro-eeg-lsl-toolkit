@@ -1,4 +1,4 @@
-# sessantaquattro_eeg_lsl_toolkit
+# sessantaquattro-eeg-lsl-toolkit
 
 Stream a 64-channel **OT Bioelettronica Sessantaquattro** to [Lab Streaming Layer](https://labstreaminglayer.org) (LSL), with a live viewer that scores the contact quality of every electrode.
 
