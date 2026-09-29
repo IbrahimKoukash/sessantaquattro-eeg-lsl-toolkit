@@ -21,3 +21,20 @@ Stream a 64-channel **OT Bioelettronica Sessantaquattro** to [Lab Streaming Laye
 - [Companion tools](#companion-tools)
 - [Known limitations](#known-limitations)
 - [References](#references)
+
+---
+
+## Requirements
+| | Version | Needed for |
+|---|---|---|
+| Python | 3.8+ | |
+| numpy | 1.21+ | |
+| scipy | 1.8+ | filtering, spectra |
+| matplotlib | 3.5+ | the viewer (needs an interactive backend, e.g. TkAgg or QtAgg) |
+| pylsl | 1.16+ | the LSL outlet |
+| mne | 1.0+ | *optional*: electrode positions for the stream metadata and the neighbour-based quality checks |
+
+```bash
+pip install -r requirements.txt
+```
+
