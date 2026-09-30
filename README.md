@@ -240,6 +240,14 @@ flowchart LR
 | Mains appears on every channel, even gelled ones | Check the reference and ground electrodes first; every channel is measured against them |
 | Traces look like flat lines | Zoom in (`+`); in MANUAL mode press `a` to restore auto-scaling |
 
+---
+
+## Companion tools
+
+coming soon
+
+---
+
 ## Known limitations
 
 - **Quality is inferred from the signal, not measured.** It is not an impedance measurement. The device has an impedance-check mode (`MODE = 6`), which the viewer does not decode; use OTBioLab+ or OT Bioelettronica's impedance script for true impedances.
@@ -255,5 +263,11 @@ flowchart LR
 - OT Bioelettronica reference code: [OTB-Matlab](https://github.com/OTBioelettronica/OTB-Matlab) (`Sessantaquattro MatLab/Read_sessantaquattro.m`: command fields, 68-channel layout, `ConvFact = 0.000286` mV) and [OTB-Python](https://github.com/OTBioelettronica/OTB-Python)
 - [Lab Streaming Layer](https://labstreaminglayer.org) · [pylsl](https://github.com/labstreaminglayer/pylsl) · [LabRecorder](https://github.com/labstreaminglayer/App-LabRecorder)
 - [MNE-Python](https://mne.tools)
+
+## License
+
+Released under the [MIT License](LICENSE). You may use, modify and redistribute the code, including commercially, provided the copyright notice and license text are kept. It comes with no warranty.
+
+This is research software, not a medical device. It is not intended for diagnosis or clinical decisions.
 
 
