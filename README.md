@@ -122,3 +122,138 @@ Each channel's percentage is the **lowest** of its sub-scores, so one serious pr
 
 Any sample within 5% of full scale scores 0 (clipping at the amplifier).
 
+**Mains is the strongest contact indicator.** It rises steeply with electrode impedance. On a real partial-gel recording, gelled electrodes carried 19–26 µV of 60 Hz while dry ones carried 5,000–8,000 µV. The `Quality` table prints each channel's mains level, so while gelling, aim for under about 30 µV.
+
+### Neighbour correlation
+
+On a head, activity spreads through the scalp, so neighbouring electrodes agree. For each channel, the viewer compares its signal with up to 8 **well-contacted** electrodes among its 12 nearest. "Well contacted" means an own-signal score of at least 60. The comparison uses the 75th percentile of those correlations, after re-referencing to the average of the well-contacted channels. That removes whatever the single common reference electrode puts on every channel, which would otherwise make even an empty cap look well correlated.
+
+A channel is marked down only if it is **both** unusual among its peers **and** poorly correlated in absolute terms (r below 0.55, zero at 0.30). Clear anti-correlation (r < −0.3) scores zero: an inverted or mis-referenced channel. A channel with fewer than 3 well-contacted neighbours is **not assessed**, rather than failed.
+
+### Cap-level checks
+
+| Well-contacted channels | Neighbour r (median, smoothed over ~10 s) | State |
+|---|---|---|
+| fewer than 8 | — | **insufficient**: amber banner; channels judged on their own signals only |
+| 8 or more | ≥ 0.35 | **ok**: `head r` shown in the title bar |
+| 8 or more | < 0.35 | **NO HEAD SIGNAL**: red banner; every channel that hasn't shown real neighbour agreement is scaled toward 0 |
+
+Measured values: a real head gave +0.62 to +0.92 in every 5-second window; simulated empty caps gave +0.03 to +0.18.
+
+---
+
+## The LSL stream
+
+| Property | Value |
+|---|---|
+| Name / type | `Sessantaquattro` / `EEG` |
+| source_id | `sessantaquattro_64ch` |
+| Channels | **68**: 64 EEG, then `AUX1`, `AUX2`, `BufferChannel`, `RampChannel` |
+| Rate / format | 500 Hz, `float32`, pushed in chunks of 16 samples |
+| EEG units | **microvolts**, raw: DC-coupled, unfiltered, not re-referenced |
+| Other channels | raw device counts (unit `raw`, type `Misc`) |
+| Timestamps | LSL `local_clock()` at the arrival of each chunk; use LabRecorder / pyxdf dejittering |
+
+**Metadata** (`desc`): per channel `label`, `unit`, `type`, and, when `mne` is installed, `location` X/Y/Z from the standard 10-05 template. Under `acquisition`: manufacturer, model, `resolution_bits` and `lsb_microvolts`.
+
+**The DC offset is real.** The amplifier is DC-coupled, so every EEG channel carries its electrode's offset (typically tens to hundreds of mV). High-pass filter at analysis time. `float32` still resolves finer than one ADC step across the whole ±2.4 V input range, so carrying the offset costs no precision.
+
+**`RampChannel`** is the device's 16-bit sample counter. It is the only way to detect samples lost on the wireless link, because LSL timestamps simply re-time the stream. A clean recording steps by exactly +1 every sample, wrapping from 65535 to 0.
+
+---
+
+## Configuration
+
+All settings are constants near the top of `sq_lsl_viewer.py`.
+
+| Setting | Default | Notes |
+|---|---|---|
+| `CHANNEL_LABELS` | 64 labels, Fp1 … O2 | **Device pin order**, read from an OTBioLab+ recording of this cap. Set to `None` for `EEG1…EEG64`. Use `extract_otb_montage.py` for a different cap |
+| `host`, `port` | `"0.0.0.0"`, `45454` | Where the computer listens for the device |
+| `RESOLUTION_BITS` | `24` | Same 0.286 µV per count either way; the extra byte adds **range**. 24-bit covers ±2.4 V. 16-bit covers only ±9.4 mV, and with the amplifier DC-coupled (`HPF = 0`), electrode offsets of tens to hundreds of mV put **every channel at the rail**. Use 16-bit only with the hardware high-pass on |
+| `line_freq` | `60.0` | Mains frequency: **50** in eastern Japan, Europe and most of Asia; 60 in western Japan and the Americas. `analyze_eeg.py` detects it from a recording |
+| `window_sec` | `5` | Seconds on screen and per quality window |
+| `channels_per_page` | `16` | Rows per page |
+| `disp_hp_hz`, `disp_lp_hz` | `1.0`, `45.0` | Display filter band (display only) |
+| `good_rms_uv`, `amp_zero_uv` | `(3, 50)`, `(1, 150)` | Amplitude sub-score |
+| `mains_abs_ok`, `mains_abs_bad` | `30`, `300` µV | Absolute mains sub-score |
+| `line_ratio_ok`, `line_ratio_bad` | `1`, `10` | Mains relative to EEG |
+| `hf_ratio_ok`, `hf_ratio_bad` | `0.35`, `1.5` | High-frequency sub-score |
+| `trust_min` | `60` | Own-signal score for a channel to count as well contacted |
+| `head_min_trusted` | `8` | Well-contacted channels needed for cap-level checks |
+| `head_r_min` | `0.35` | Neighbour correlation needed to report a head |
+| `corr_k`, `corr_reach` | `8`, `12` | Neighbours compared, among how many nearest |
+
+### Device command
+
+`create_bin_command()` builds the 2-byte command word. Field meanings follow OT Bioelettronica's reference script:
+
+| Field | Value used | Meaning |
+|---|---|---|
+| GO | 1 | Send settings and start transfer (0 on exit = stop) |
+| REC | 0 | Don't record to the device's SD card |
+| TRIG | 0 | Transfer controlled remotely by this command |
+| EXTEN | 0 | Standard input range. **Keep 0**: ×2/×4/×8 ranges change the µV scaling |
+| HPF | 0 | DC coupled (hardware high-pass off) |
+| HRES | 1 | 24-bit samples (from `RESOLUTION_BITS`) |
+| MODE | 0 | Monopolar (6 = impedance check, 7 = test mode) |
+| NCH | 3 | 64 channels |
+| FSAMP | 0 | 500 Hz (1 = 1000, 2 = 2000) |
+
+With these settings the command is `0x1881`.
+
+---
+
+## How it works
+
+```mermaid
+flowchart LR
+    D[Sessantaquattro] -- TCP :45454 --> P[Layout probe<br/>find Ramp counter]
+    P --> R[Read 16-sample blocks<br/>decode 24-bit big-endian]
+    R --> C[Ramp counter check<br/>lost samples]
+    R --> L[LSL outlet<br/>raw uV, 68 ch]
+    R --> F[Display filter<br/>continuous, stateful]
+    R --> RB[(Raw ring<br/>5 s)]
+    F --> DB[(Filtered ring<br/>5 s)]
+    RB --> Q[Quality every 2 s<br/>own-signal, then neighbours]
+    DB --> V[Viewer<br/>lanes, scale, colours]
+    Q --> V
+```
+
+- **Layout probe.** On connect, the viewer reads about 50 samples and finds the channel count at which one column advances by exactly +1 per sample: the Ramp counter. A wrong channel count shifts every sample boundary, turning each "channel" into a rotating mixture of inputs, and this is invisible on flat data. The probe makes it impossible. If the device sends a different count, the viewer adapts and says so.
+- **Decoding.** Big-endian, two's complement for EEG and AUX; unsigned for Buffer and Ramp. EEG is multiplied by **0.286 µV per count**.
+- **Display filter.** Runs continuously in the acquisition thread with its state carried between blocks. Re-filtering each 5-second window from scratch makes the filter ring at both ends of the window, and with a DC-coupled amplifier those edge artefacts swamp the plot.
+- **Threads.** Acquisition, decoding, LSL output and filtering run in a background thread. Only drawing and quality scoring run on the main thread.
+
+---
+
+## Troubleshooting
+
+| Symptom | Cause / fix |
+|---|---|
+| Stuck at `Waiting for Sessantaquattro connection...` | The device isn't reaching the computer. Check both are on the same network, the firewall allows Python on port 45454, and no other program (e.g. OTBioLab+) is connected to the device; it serves one client at a time |
+| Connected, but no data | Press the Sessantaquattro pushbutton; check the device mode |
+| `could not find the Ramp counter` warning | The layout couldn't be confirmed. Treat the traces with suspicion and check the device mode (monopolar, 64 ch) |
+| `DROPOUT: n sample(s) lost` | The Wi-Fi link dropped samples. Move the computer closer, reduce 2.4 GHz congestion |
+| Keys / buttons do nothing | Non-interactive plot backend. Run from a terminal (see Quick start) |
+| All channels in colour but a red `NO HEAD SIGNAL` banner | Cap not on a head, or the reference/ground electrode is disconnected |
+| Mains appears on every channel, even gelled ones | Check the reference and ground electrodes first; every channel is measured against them |
+| Traces look like flat lines | Zoom in (`+`); in MANUAL mode press `a` to restore auto-scaling |
+
+## Known limitations
+
+- **Quality is inferred from the signal, not measured.** It is not an impedance measurement. The device has an impedance-check mode (`MODE = 6`), which the viewer does not decode; use OTBioLab+ or OT Bioelettronica's impedance script for true impedances.
+- **Intermittent pops can pass the live score.** The amplitude measure ignores rare large events so that blinks don't fail good frontal electrodes, which also lets an electrode with occasional pops through. The neighbour check catches it once 8 channels are good, and `analyze_eeg.py` flags it over a whole recording.
+- **Thresholds were tuned on one cap in one lab** (60 Hz mains). Absolute mains limits in particular depend on the environment.
+- **Monopolar 64-channel mode only.** Other modes change the channel count and are not handled.
+- **One device per instance**, on a fixed port.
+
+---
+
+## References
+
+- OT Bioelettronica reference code: [OTB-Matlab](https://github.com/OTBioelettronica/OTB-Matlab) (`Sessantaquattro MatLab/Read_sessantaquattro.m`: command fields, 68-channel layout, `ConvFact = 0.000286` mV) and [OTB-Python](https://github.com/OTBioelettronica/OTB-Python)
+- [Lab Streaming Layer](https://labstreaminglayer.org) · [pylsl](https://github.com/labstreaminglayer/pylsl) · [LabRecorder](https://github.com/labstreaminglayer/App-LabRecorder)
+- [MNE-Python](https://mne.tools)
+
+
