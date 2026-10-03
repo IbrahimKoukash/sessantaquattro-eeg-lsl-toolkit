@@ -98,6 +98,8 @@ Every action has an on-screen button. Keys work too, once you've clicked on the 
 | **Grey trace + `CLIP`** | The channel keeps hitting the edge of its row **and** scores below 40%: a bad contact. A good channel that briefly clips (a blink on a gelled frontal electrode) keeps its colour |
 | **Amber banner** | Fewer than 8 channels are well contacted, so cap-level checks are not running yet (normal while gelling) |
 | **Red banner** | `NO HEAD SIGNAL`: enough channels look clean on their own, but together they show none of the spatial structure a head produces (an empty cap, or a disconnected reference/ground) |
+| **Dark banner + `COPY`** | `N CHANNELS ARE IDENTICAL COPIES`: those channels have the same offset and the same signal, so they are not touching the scalp (or are bridged together). They score 0% and are grey. They would otherwise look perfect: normal amplitude, no mains (see [identical copies](#identical-copies)) |
+| **Purple banner + `REF`** | `CHECK REFERENCE / GROUND`: no channel on the cap is free of mains, and the channels that look like EEG all carry the same mains. It is coming in through the shared reference or ground electrode, so re-gelling the channels won't help. The `REF` channels keep their colour and set the display scale, so their EEG stays visible (see [reference / ground check](#reference--ground-check)) |
 
 The display is filtered 1–45 Hz with notches at the mains frequency and its first harmonic, for viewing only. **The LSL stream is never filtered.** The display scale follows the well-contacted channels, so good EEG fills its row and poor channels clip against the edges.
 
