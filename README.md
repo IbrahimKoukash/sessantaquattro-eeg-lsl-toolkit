@@ -103,9 +103,7 @@ Every action has an on-screen button. Keys work too, once you've clicked on the 
 
 The display is filtered 1–45 Hz with notches at the mains frequency and its first harmonic, for viewing only. **The LSL stream is never filtered.** The display scale follows the well-contacted channels, so good EEG fills its row and poor channels clip against the edges.
 
-<img width="875" height="625" alt="image" src="https://github.com/user-attachments/assets/3376c855-d7f0-4dd0-b88e-00706173e43d" />
-
-*A real session with only F7, F9 and AF7 gelled. Those three score 99–100% while the 61 dry channels are greyed out, and the amber banner says cap-level checks are waiting for 8 good channels.*
+<img width="832" height="612" alt="image" src="https://github.com/user-attachments/assets/73181dd4-0201-46a1-b685-d1b74ec369c5" />
 
 ---
 
@@ -141,6 +139,24 @@ A channel is marked down only if it is **both** unusual among its peers **and** 
 | 8 or more | < 0.35 | **NO HEAD SIGNAL**: red banner; every channel that hasn't shown real neighbour agreement is scaled toward 0 |
 
 Measured values: a real head gave +0.62 to +0.92 in every 5-second window; simulated empty caps gave +0.03 to +0.18.
+
+### Identical copies
+
+Every real electrode has its own offset (its half-cell potential, tens to hundreds of mV) and its own noise, so two real channels never match to the microvolt. Inputs that are not touching the scalp all report the same point inside the amplifier: the same offset and the same signal. That signal is small, has no mains and even has an alpha peak (most likely the reference electrode's own signal), so on its own every check passes. Copies also "agree with their neighbours" at r = 1.00, which used to make the head check pass on them.
+
+In each window the viewer joins channels into a group when their offsets are within 2 mV **and** the RMS of their difference above 1 Hz is below 2.5 µV. Groups of 3 or more are copies. Channels at the group's exact offset join it too, even if a little signal leaks onto them. Copies score 0, are drawn grey with `COPY`, are left out of the neighbour, head and reference checks, and never set the display scale.
+
+### Reference / ground check
+
+Every channel is recorded against one shared reference electrode. Mains picked up there appears, identically, on every channel, so the per-channel scores all fall to 0% however well the channels are gelled. The viewer recognises the pattern in each window:
+
+1. **No channel on the cap has less than 75 µV of mains.** A single channel with low mains proves the reference is fine, because the reference's mains would be on it too. Good sessions measured 4–20 µV here.
+2. **At least 3 channels with EEG-sized signals** (amplitude sub-score ≥ 60) sit within 3× that lowest level, with similar mains (90th/10th percentile ≤ 2.5×).
+3. **Their 60 Hz waveforms match** (median correlation ≥ 0.9). Only channels in step with the rest are listed.
+
+The banner follows the majority of the last three checks (about 6 s). Separate poor contacts give mains of very different sizes and fail step 2 or 3. In a real session with a poorly attached reference, 8 freshly gelled central channels carried 300–550 µV of 60 Hz with waveform correlation 1.00, while the same electrodes in an earlier session carried about 19 µV.
+
+Per-channel scores are **not** raised: the recorded data really does contain that mains. The check tells you where to fix it.
 
 ---
 
@@ -185,6 +201,8 @@ All settings are constants near the top of `sq_lsl_viewer.py`.
 | `head_min_trusted` | `8` | Well-contacted channels needed for cap-level checks |
 | `head_r_min` | `0.35` | Neighbour correlation needed to report a head |
 | `corr_k`, `corr_reach` | `8`, `12` | Neighbours compared, among how many nearest |
+| `copy_dc_tol_uv`, `copy_rms_uv`, `copy_min_channels` | `2000` µV, `2.5` µV, `3` | Identical-copy check |
+| `ref_floor_uv`, `ref_group_span`, `ref_similar`, `ref_min_channels`, `ref_coherence` | `75`, `3`, `2.5`, `3`, `0.9` | Reference / ground check |
 
 ### Device command
 
@@ -240,6 +258,9 @@ flowchart LR
 | Keys / buttons do nothing | Non-interactive plot backend. Run from a terminal (see Quick start) |
 | All channels in colour but a red `NO HEAD SIGNAL` banner | Cap not on a head, or the reference/ground electrode is disconnected |
 | Mains appears on every channel, even gelled ones | Check the reference and ground electrodes first; every channel is measured against them |
+| Dark `IDENTICAL COPIES` banner, many channels grey with `COPY` | Those electrodes aren't touching the scalp: cap lifted, hair under the electrodes, or not gelled at all. If it covers a whole connector's channels, check that the connector is seated |
+| Real EEG looks like square steps | The traces are being cut at the edge of their row because the scale is too small. Press `-` or `a` |
+| Purple `CHECK REFERENCE / GROUND` banner, or mains on every channel even gelled ones | Re-attach the reference and ground electrodes first: clean the skin, fresh gel, firm contact, leads seated. Every channel is measured against them |
 | Traces look like flat lines | Zoom in (`+`); in MANUAL mode press `a` to restore auto-scaling |
 
 ---
