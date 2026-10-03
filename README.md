@@ -17,6 +17,7 @@ Stream a 64-channel **OT Bioelettronica Sessantaquattro** to [Lab Streaming Laye
 - [The LSL stream](#the-lsl-stream)
 - [Configuration](#configuration)
 - [How it works](#how-it-works)
+- [Project layout](#project-layout)
 - [Troubleshooting](#troubleshooting)
 - [Companion tools](#companion-tools)
 - [Known limitations](#known-limitations)
@@ -50,7 +51,7 @@ Hardware: a Sessantaquattro with a 64-channel EEG cap connected in **monopolar**
 
 2. **Start the viewer from a terminal:**
    ```bash
-   python sq_lsl_viewer.py
+   python main.py
    ```
    Run it from a terminal, not a notebook, Spyder or VS Code's interactive window. Those use a non-interactive plot backend, so the window won't respond to clicks or keys, and the viewer warns about this at startup.
 
@@ -244,6 +245,37 @@ flowchart LR
 - **Decoding.** Big-endian, two's complement for EEG and AUX; unsigned for Buffer and Ramp. EEG is multiplied by **0.286 µV per count**.
 - **Display filter.** Runs continuously in the acquisition thread with its state carried between blocks. Re-filtering each 5-second window from scratch makes the filter ring at both ends of the window, and with a DC-coupled amplifier those edge artefacts swamp the plot.
 - **Threads.** Acquisition, decoding, LSL output and filtering run in a background thread. Only drawing and quality scoring run on the main thread.
+
+---
+
+## Project layout
+
+```
+main.py           entry point: connect, probe the layout, start the LSL outlet, thread and viewer
+sqlsl/
+  config.py       all settings: labels, host/port, display, quality thresholds
+  protocol.py     device command word, µV-per-count scale, disconnect
+  runtime.py      shared state: channel layout, ring buffers, lock, stop flag
+  decoding.py     socket reads, 24/16-bit decoding, channel-count probe
+  counter.py      Ramp counter / dropout monitor
+  filters.py      display filters (live causal + zero-phase for analysis)
+  montage.py      electrode positions, nearest-neighbour map
+  outlet.py       LSL outlet and its metadata
+  quality.py      per-channel own-signal scores (amp, line, hf)
+  cap_checks.py   neighbour correlation, head check, identical copies, reference check
+  report.py       the printed quality table (`Quality` / `q`)
+  acquisition.py  background acquisition thread
+  viewer.py       matplotlib viewer
+```
+
+The `sqlsl` modules can be imported on their own, for example to score a recording offline:
+
+```python
+from sqlsl.cap_checks import assess_cap
+overall, parts, r, cap = assess_cap(eeg_window_uv)  # (samples, 64) in µV, 500 Hz
+```
+
+Values that change when the device reports a different channel count (`nch`, `n_eeg`, `eeg_labels`, the ring buffers) live in `sqlsl/runtime.py`. Read them as `runtime.nch`, not `from sqlsl.runtime import nch`, or the copy goes stale after the layout probe adjusts them.
 
 ---
 
