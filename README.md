@@ -251,21 +251,21 @@ flowchart LR
 ## Project layout
 
 ```
-main.py           entry point: connect, probe the layout, start the LSL outlet, thread and viewer
+main.py entry point: connect, probe the layout, start the LSL outlet, thread and viewer
 sqlsl/
-  config.py       all settings: labels, host/port, display, quality thresholds
-  protocol.py     device command word, µV-per-count scale, disconnect
-  runtime.py      shared state: channel layout, ring buffers, lock, stop flag
-  decoding.py     socket reads, 24/16-bit decoding, channel-count probe
-  counter.py      Ramp counter / dropout monitor
-  filters.py      display filters (live causal + zero-phase for analysis)
-  montage.py      electrode positions, nearest-neighbour map
-  outlet.py       LSL outlet and its metadata
-  quality.py      per-channel own-signal scores (amp, line, hf)
-  cap_checks.py   neighbour correlation, head check, identical copies, reference check
-  report.py       the printed quality table (`Quality` / `q`)
-  acquisition.py  background acquisition thread
-  viewer.py       matplotlib viewer
+  config.py all settings: labels, host/port, display, quality thresholds
+  protocol.py device command word, µV-per-count scale, disconnect
+  runtime.py shared state: channel layout, ring buffers, lock, stop flag
+  decoding.py socket reads, 24/16-bit decoding, channel-count probe
+  counter.py Ramp counter / dropout monitor
+  filters.py display filters (live causal + zero-phase for analysis)
+  montage.py electrode positions, nearest-neighbour map
+  outlet.py LSL outlet and its metadata
+  quality.py per-channel own-signal scores (amp, line, hf)
+  cap_checks.py neighbour correlation, head check, identical copies, reference check
+  report.py the printed quality table (`Quality` / `q`)
+  acquisition.py background acquisition thread
+  viewer.py matplotlib viewer
 ```
 
 The `sqlsl` modules can be imported on their own, for example to score a recording offline:
