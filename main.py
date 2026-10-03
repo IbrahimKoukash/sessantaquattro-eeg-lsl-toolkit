@@ -8,7 +8,7 @@ Acquisition thread: TCP from the device -> layout check -> decode ->
 Main thread: matplotlib viewer, 16 channels per page, every trace
                      confined to its own lane, quality % per channel
 
-Run:  python3 main.py
+Run: python3 main.py
 Settings live in sqlsl/config.py. Documentation: README.md
 '''
 
